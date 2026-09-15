@@ -4,8 +4,9 @@ import type {
 	INodeExecutionData,
 	INodeType,
 	INodeTypeDescription,
+	JsonObject,
 } from 'n8n-workflow';
-import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
+import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 /**
  * n8n community node for the public 2nodoc API (French/Belgian RFE e-invoicing).
@@ -19,11 +20,12 @@ export class TwoNodoc implements INodeType {
 	description: INodeTypeDescription = {
 		displayName: '2nodoc',
 		name: 'twoNodoc',
-		icon: 'file:twonodoc.svg',
+		icon: { light: 'file:twonodoc.svg', dark: 'file:twonodoc.svg' },
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Manage invoices, clients, and RFE e-invoicing via the 2nodoc API',
+		usableAsTool: true,
 		defaults: {
 			name: '2nodoc',
 		},
@@ -62,21 +64,25 @@ export class TwoNodoc implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['invoice'] } },
 				options: [
+					{
+						name: 'Convert Quote to Invoice',
+						value: 'convert',
+						action: 'Convert a quote into an invoice',
+					},
 					{ name: 'Create', value: 'create', action: 'Create an invoice or quote' },
-					{ name: 'Get', value: 'get', action: 'Get an invoice' },
-					{ name: 'Get Many', value: 'getAll', action: 'Get many invoices' },
-					{ name: 'Update', value: 'update', action: 'Update an invoice or quote' },
-					{ name: 'Delete', value: 'delete', action: 'Delete an invoice (soft delete)' },
-					{ name: 'Update Status', value: 'updateStatus', action: 'Update the status of an invoice' },
-					{ name: 'Convert Quote to Invoice', value: 'convert', action: 'Convert a quote into an invoice' },
-					{ name: 'Send by Email', value: 'send', action: 'Send an invoice by email' },
-					{ name: 'Get Send History', value: 'getSendHistory', action: 'Get the send history' },
-					{ name: 'Download PDF', value: 'downloadPdf', action: 'Download the invoice PDF' },
+					{ name: 'Delete', value: 'delete', action: 'Delete an invoice' },
 					{
 						name: 'Download Factur-X',
 						value: 'downloadFacturx',
-						action: 'Download the invoice Factur-X file',
+						action: 'Download the invoice FACTUR-X file',
 					},
+					{ name: 'Download PDF', value: 'downloadPdf', action: 'Download the invoice PDF' },
+					{ name: 'Get', value: 'get', action: 'Get an invoice' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many invoices' },
+					{ name: 'Get Send History', value: 'getSendHistory', action: 'Get the send history' },
+					{ name: 'Send by Email', value: 'send', action: 'Send an invoice by email' },
+					{ name: 'Update', value: 'update', action: 'Update an invoice or quote' },
+					{ name: 'Update Status', value: 'updateStatus', action: 'Update the status of an invoice' },
 				],
 				default: 'getAll',
 			},
@@ -92,10 +98,10 @@ export class TwoNodoc implements INodeType {
 				displayOptions: { show: { resource: ['client'] } },
 				options: [
 					{ name: 'Create', value: 'create', action: 'Create a client' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a client' },
 					{ name: 'Get', value: 'get', action: 'Get a client' },
 					{ name: 'Get Many', value: 'getAll', action: 'Get many clients' },
 					{ name: 'Update', value: 'update', action: 'Update a client' },
-					{ name: 'Delete', value: 'delete', action: 'Delete a client (soft delete)' },
 				],
 				default: 'getAll',
 			},
@@ -110,18 +116,22 @@ export class TwoNodoc implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['einvoice'] } },
 				options: [
-					{ name: 'Connection Status', value: 'status', action: 'Check the RFE connection status' },
+					{ name: 'Accept', value: 'accept', action: 'Accept a received electronic invoice' },
 					{ name: 'Connected Company', value: 'company', action: 'Get the connected company' },
-					{ name: 'Get', value: 'get', action: 'Get an e-invoice' },
-					{ name: 'Get Many', value: 'getAll', action: 'Get many e-invoices' },
-					{ name: 'Accept', value: 'accept', action: 'Accept a received e-invoice' },
-					{ name: 'Reject', value: 'reject', action: 'Reject a received e-invoice' },
-					{ name: 'Open Dispute', value: 'dispute', action: 'Open a dispute on an e-invoice' },
+					{ name: 'Connection Status', value: 'status', action: 'Check the RFE connection status' },
+					{ name: 'Get', value: 'get', action: 'Get an electronic invoice' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many electronic invoices' },
 					{
 						name: 'Initiate Payment',
 						value: 'initiatePayment',
-						action: 'Initiate payment for an e-invoice',
+						action: 'Initiate payment for an electronic invoice',
 					},
+					{
+						name: 'Open Dispute',
+						value: 'dispute',
+						action: 'Open a dispute on an electronic invoice',
+					},
+					{ name: 'Reject', value: 'reject', action: 'Reject a received electronic invoice' },
 				],
 				default: 'getAll',
 			},
@@ -224,8 +234,8 @@ export class TwoNodoc implements INodeType {
 						displayName: 'Line',
 						name: 'line',
 						values: [
-							{ displayName: 'Number', name: 'number', type: 'number', default: 1 },
 							{ displayName: 'Description', name: 'description', type: 'string', default: '' },
+							{ displayName: 'Number', name: 'number', type: 'number', default: 1 },
 							{ displayName: 'Quantity', name: 'quantity', type: 'number', default: 1 },
 							{ displayName: 'Unit Price', name: 'unit_price', type: 'number', default: 0 },
 							{ displayName: 'VAT Rate (%)', name: 'vat_rate', type: 'number', default: 20 },
@@ -255,6 +265,7 @@ export class TwoNodoc implements INodeType {
 				name: 'returnAll',
 				type: 'boolean',
 				default: false,
+				description: 'Whether to return all results or only up to a given limit',
 				displayOptions: { show: { resource: ['invoice', 'client', 'einvoice'], operation: ['getAll'] } },
 			},
 			{
@@ -262,6 +273,7 @@ export class TwoNodoc implements INodeType {
 				name: 'limit',
 				type: 'number',
 				default: 50,
+				description: 'Max number of results to return',
 				typeOptions: { minValue: 1 },
 				displayOptions: {
 					show: { resource: ['invoice', 'client', 'einvoice'], operation: ['getAll'], returnAll: [false] },
@@ -536,7 +548,7 @@ export class TwoNodoc implements INodeType {
 					});
 					continue;
 				}
-				throw error;
+				throw new NodeApiError(this.getNode(), error as JsonObject);
 			}
 		}
 

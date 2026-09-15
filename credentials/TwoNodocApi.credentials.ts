@@ -4,6 +4,7 @@ import type {
 	ICredentialType,
 	INodeProperties,
 } from 'n8n-workflow';
+import type { Icon } from 'n8n-workflow';
 
 // 2nodoc auth: static Bearer token (API key generated from the 2nodoc dashboard).
 // Confirmed against the public OpenAPI spec (https://api.2nodoc.com/openapi.json): security
@@ -13,6 +14,8 @@ export class TwoNodocApi implements ICredentialType {
 	name = 'twoNodocApi';
 
 	displayName = '2nodoc API';
+
+	icon: Icon = { light: 'file:twonodoc.svg', dark: 'file:twonodoc.svg' };
 
 	documentationUrl = 'https://api.2nodoc.com/docs';
 
