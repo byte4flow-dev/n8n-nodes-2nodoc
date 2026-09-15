@@ -8,12 +8,12 @@ import type {
 import { NodeConnectionTypes, NodeOperationError } from 'n8n-workflow';
 
 /**
- * Node communautaire n8n pour l'API publique 2nodoc (e-invoicing RFE France/Belgique).
+ * n8n community node for the public 2nodoc API (French/Belgian RFE e-invoicing).
  *
- * Endpoints et schémas basés sur la spec OpenAPI publique https://api.2nodoc.com/openapi.json
- * (consultée le 13/09/2026). Périmètre v0.1 (MVP) : Factures, Clients, E-Invoices (RFE/SuperPDP).
- * Non couverts pour l'instant (à ajouter dans une v0.2 sur le même modèle) : Products, Team Users,
- * facture d'achat depuis OCR (POST /api/public/invoices/buy).
+ * Endpoints and schemas are based on the public OpenAPI spec https://api.2nodoc.com/openapi.json
+ * (checked on 13/09/2026). v0.1 (MVP) scope: Invoices, Clients, E-Invoices (RFE/PA-PDP).
+ * Not covered yet (to add in a v0.2 following the same pattern): Products, Team Users,
+ * purchase invoice from OCR (POST /api/public/invoices/buy).
  */
 export class TwoNodoc implements INodeType {
 	description: INodeTypeDescription = {
@@ -23,7 +23,7 @@ export class TwoNodoc implements INodeType {
 		group: ['transform'],
 		version: 1,
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
-		description: 'Gérer factures, clients et e-invoicing RFE via l\'API 2nodoc',
+		description: 'Manage invoices, clients, and RFE e-invoicing via the 2nodoc API',
 		defaults: {
 			name: '2nodoc',
 		},
@@ -45,7 +45,7 @@ export class TwoNodoc implements INodeType {
 				type: 'options',
 				noDataExpression: true,
 				options: [
-					{ name: 'Facture', value: 'invoice' },
+					{ name: 'Invoice', value: 'invoice' },
 					{ name: 'Client', value: 'client' },
 					{ name: 'E-Invoice (RFE)', value: 'einvoice' },
 				],
@@ -62,20 +62,20 @@ export class TwoNodoc implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['invoice'] } },
 				options: [
-					{ name: 'Créer', value: 'create', action: 'Créer une facture ou un devis' },
-					{ name: 'Récupérer', value: 'get', action: 'Récupérer une facture' },
-					{ name: 'Lister', value: 'getAll', action: 'Lister les factures' },
-					{ name: 'Mettre à Jour', value: 'update', action: 'Mettre à jour une facture ou un devis' },
-					{ name: 'Supprimer', value: 'delete', action: 'Supprimer une facture (suppression douce)' },
-					{ name: 'Changer le Statut', value: 'updateStatus', action: 'Changer le statut d une facture' },
-					{ name: 'Convertir Devis → Facture', value: 'convert', action: 'Convertir un devis en facture' },
-					{ name: 'Envoyer par Email', value: 'send', action: 'Envoyer une facture par email' },
-					{ name: 'Historique d\'envoi', value: 'getSendHistory', action: 'Récupérer l historique d envoi' },
-					{ name: 'Télécharger le PDF', value: 'downloadPdf', action: 'Télécharger le PDF de la facture' },
+					{ name: 'Create', value: 'create', action: 'Create an invoice or quote' },
+					{ name: 'Get', value: 'get', action: 'Get an invoice' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many invoices' },
+					{ name: 'Update', value: 'update', action: 'Update an invoice or quote' },
+					{ name: 'Delete', value: 'delete', action: 'Delete an invoice (soft delete)' },
+					{ name: 'Update Status', value: 'updateStatus', action: 'Update the status of an invoice' },
+					{ name: 'Convert Quote to Invoice', value: 'convert', action: 'Convert a quote into an invoice' },
+					{ name: 'Send by Email', value: 'send', action: 'Send an invoice by email' },
+					{ name: 'Get Send History', value: 'getSendHistory', action: 'Get the send history' },
+					{ name: 'Download PDF', value: 'downloadPdf', action: 'Download the invoice PDF' },
 					{
-						name: 'Télécharger le Factur-X',
+						name: 'Download Factur-X',
 						value: 'downloadFacturx',
-						action: 'Télécharger le fichier Factur-X de la facture',
+						action: 'Download the invoice Factur-X file',
 					},
 				],
 				default: 'getAll',
@@ -91,17 +91,17 @@ export class TwoNodoc implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['client'] } },
 				options: [
-					{ name: 'Créer', value: 'create', action: 'Créer un client' },
-					{ name: 'Récupérer', value: 'get', action: 'Récupérer un client' },
-					{ name: 'Lister', value: 'getAll', action: 'Lister les clients' },
-					{ name: 'Mettre à Jour', value: 'update', action: 'Mettre à jour un client' },
-					{ name: 'Supprimer', value: 'delete', action: 'Supprimer un client (suppression douce)' },
+					{ name: 'Create', value: 'create', action: 'Create a client' },
+					{ name: 'Get', value: 'get', action: 'Get a client' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many clients' },
+					{ name: 'Update', value: 'update', action: 'Update a client' },
+					{ name: 'Delete', value: 'delete', action: 'Delete a client (soft delete)' },
 				],
 				default: 'getAll',
 			},
 
 			// ---------------------------------------------------------------
-			// E-invoice (RFE/SuperPDP) operations
+			// E-invoice (RFE/PA-PDP) operations
 			// ---------------------------------------------------------------
 			{
 				displayName: 'Operation',
@@ -110,17 +110,17 @@ export class TwoNodoc implements INodeType {
 				noDataExpression: true,
 				displayOptions: { show: { resource: ['einvoice'] } },
 				options: [
-					{ name: 'Statut de Connexion', value: 'status', action: 'Vérifier le statut de connexion RFE' },
-					{ name: 'Société Connectée', value: 'company', action: 'Récupérer la société connectée' },
-					{ name: 'Récupérer', value: 'get', action: 'Récupérer une e-invoice' },
-					{ name: 'Lister', value: 'getAll', action: 'Lister les e-invoices' },
-					{ name: 'Accepter', value: 'accept', action: 'Accepter une e-invoice reçue' },
-					{ name: 'Refuser', value: 'reject', action: 'Refuser une e-invoice reçue' },
-					{ name: 'Ouvrir un Litige', value: 'dispute', action: 'Ouvrir un litige sur une e-invoice' },
+					{ name: 'Connection Status', value: 'status', action: 'Check the RFE connection status' },
+					{ name: 'Connected Company', value: 'company', action: 'Get the connected company' },
+					{ name: 'Get', value: 'get', action: 'Get an e-invoice' },
+					{ name: 'Get Many', value: 'getAll', action: 'Get many e-invoices' },
+					{ name: 'Accept', value: 'accept', action: 'Accept a received e-invoice' },
+					{ name: 'Reject', value: 'reject', action: 'Reject a received e-invoice' },
+					{ name: 'Open Dispute', value: 'dispute', action: 'Open a dispute on an e-invoice' },
 					{
-						name: 'Initier le Paiement',
+						name: 'Initiate Payment',
 						value: 'initiatePayment',
-						action: 'Initier le paiement d une e-invoice',
+						action: 'Initiate payment for an e-invoice',
 					},
 				],
 				default: 'getAll',
@@ -130,7 +130,7 @@ export class TwoNodoc implements INodeType {
 			// Shared: ID fields
 			// ---------------------------------------------------------------
 			{
-				displayName: 'ID Facture',
+				displayName: 'Invoice ID',
 				name: 'invoiceId',
 				type: 'string',
 				default: '',
@@ -153,7 +153,7 @@ export class TwoNodoc implements INodeType {
 				},
 			},
 			{
-				displayName: 'ID Client',
+				displayName: 'Client ID',
 				name: 'clientId',
 				type: 'string',
 				default: '',
@@ -163,7 +163,7 @@ export class TwoNodoc implements INodeType {
 				},
 			},
 			{
-				displayName: 'ID E-Invoice',
+				displayName: 'E-Invoice ID',
 				name: 'einvoiceId',
 				type: 'string',
 				default: '',
@@ -180,30 +180,30 @@ export class TwoNodoc implements INodeType {
 			// Invoice: create
 			// ---------------------------------------------------------------
 			{
-				displayName: 'ID Client',
+				displayName: 'Client ID',
 				name: 'clientId',
 				type: 'string',
 				default: '',
 				required: true,
-				description: 'Client destinataire (client_id)',
+				description: 'Recipient client (client_id)',
 				displayOptions: { show: { resource: ['invoice'], operation: ['create'] } },
 			},
 			{
-				displayName: 'Type de Document',
+				displayName: 'Document Type',
 				name: 'invoiceType',
 				type: 'options',
 				default: 'invoice',
 				required: true,
 				options: [
-					{ name: 'Facture', value: 'invoice' },
-					{ name: 'Devis', value: 'quote' },
-					{ name: 'Facture d\'Achat', value: 'buy' },
-					{ name: 'Avoir', value: 'credit_note' },
+					{ name: 'Invoice', value: 'invoice' },
+					{ name: 'Quote', value: 'quote' },
+					{ name: 'Purchase Invoice', value: 'buy' },
+					{ name: 'Credit Note', value: 'credit_note' },
 				],
 				displayOptions: { show: { resource: ['invoice'], operation: ['create'] } },
 			},
 			{
-				displayName: 'Date de la Facture',
+				displayName: 'Invoice Date',
 				name: 'invoiceDate',
 				type: 'dateTime',
 				default: '',
@@ -211,24 +211,24 @@ export class TwoNodoc implements INodeType {
 				displayOptions: { show: { resource: ['invoice'], operation: ['create'] } },
 			},
 			{
-				displayName: 'Lignes',
+				displayName: 'Lines',
 				name: 'lines',
 				type: 'fixedCollection',
 				typeOptions: { multipleValues: true },
 				default: {},
 				required: true,
-				placeholder: 'Ajouter une ligne',
+				placeholder: 'Add a Line',
 				displayOptions: { show: { resource: ['invoice'], operation: ['create'] } },
 				options: [
 					{
-						displayName: 'Ligne',
+						displayName: 'Line',
 						name: 'line',
 						values: [
-							{ displayName: 'Numéro', name: 'number', type: 'number', default: 1 },
+							{ displayName: 'Number', name: 'number', type: 'number', default: 1 },
 							{ displayName: 'Description', name: 'description', type: 'string', default: '' },
-							{ displayName: 'Quantité', name: 'quantity', type: 'number', default: 1 },
-							{ displayName: 'Prix Unitaire', name: 'unit_price', type: 'number', default: 0 },
-							{ displayName: 'Taux de TVA (%)', name: 'vat_rate', type: 'number', default: 20 },
+							{ displayName: 'Quantity', name: 'quantity', type: 'number', default: 1 },
+							{ displayName: 'Unit Price', name: 'unit_price', type: 'number', default: 0 },
+							{ displayName: 'VAT Rate (%)', name: 'vat_rate', type: 'number', default: 20 },
 						],
 					},
 				],
@@ -238,27 +238,27 @@ export class TwoNodoc implements INodeType {
 			// Invoice: updateStatus
 			// ---------------------------------------------------------------
 			{
-				displayName: 'Nouveau Statut',
+				displayName: 'New Status',
 				name: 'status',
 				type: 'string',
 				default: '',
 				required: true,
-				description: 'Code de statut cible (voir la documentation 2nodoc pour les valeurs valides selon le type de document)',
+				description: 'Target status code (see the 2nodoc documentation for valid values depending on the document type)',
 				displayOptions: { show: { resource: ['invoice'], operation: ['updateStatus'] } },
 			},
 
 			// ---------------------------------------------------------------
-			// Invoice/Client: getAll — pagination & filtres
+			// Invoice/Client: getAll — pagination & filters
 			// ---------------------------------------------------------------
 			{
-				displayName: 'Retourner Tout',
+				displayName: 'Return All',
 				name: 'returnAll',
 				type: 'boolean',
 				default: false,
 				displayOptions: { show: { resource: ['invoice', 'client', 'einvoice'], operation: ['getAll'] } },
 			},
 			{
-				displayName: 'Limite',
+				displayName: 'Limit',
 				name: 'limit',
 				type: 'number',
 				default: 50,
@@ -268,12 +268,12 @@ export class TwoNodoc implements INodeType {
 				},
 			},
 			{
-				displayName: 'Filtres Additionnels',
+				displayName: 'Additional Filters',
 				name: 'filters',
 				type: 'json',
 				default: '{}',
 				description:
-					'Paramètres de requête additionnels au format JSON (ex. {"type": "invoice", "status": "paid", "client_id": 123}). Passés tels quels en query string.',
+					'Additional query parameters as JSON (e.g. {"type": "invoice", "status": "paid", "client_id": 123}). Passed as-is as query string.',
 				displayOptions: { show: { resource: ['invoice', 'client', 'einvoice'], operation: ['getAll'] } },
 			},
 
@@ -286,24 +286,24 @@ export class TwoNodoc implements INodeType {
 				type: 'options',
 				default: 'in',
 				options: [
-					{ name: 'Reçues', value: 'in' },
-					{ name: 'Émises', value: 'out' },
+					{ name: 'Received', value: 'in' },
+					{ name: 'Sent', value: 'out' },
 				],
 				displayOptions: { show: { resource: ['einvoice'], operation: ['getAll'] } },
 			},
 
 			// ---------------------------------------------------------------
 			// Generic body passthrough for create/update on Invoice & Client
-			// (l'API expose davantage de champs optionnels que ceux modélisés
-			// explicitement ci-dessus ; ce champ permet de les fournir sans
-			// attendre une mise à jour du node)
+			// (the API exposes more optional fields than the ones explicitly
+			// modeled above; this field lets users supply them without
+			// waiting for a node update)
 			// ---------------------------------------------------------------
 			{
-				displayName: 'Champs Additionnels',
+				displayName: 'Additional Fields',
 				name: 'additionalFields',
 				type: 'json',
 				default: '{}',
-				description: 'Champs supplémentaires à fusionner dans le corps de la requête (format JSON)',
+				description: 'Extra fields to merge into the request body (JSON format)',
 				displayOptions: {
 					show: {
 						resource: ['invoice', 'client'],
@@ -332,7 +332,7 @@ export class TwoNodoc implements INodeType {
 			} catch (error) {
 				throw new NodeOperationError(
 					this.getNode(),
-					`JSON invalide : ${(error as Error).message}`,
+					`Invalid JSON: ${(error as Error).message}`,
 				);
 			}
 		};
@@ -403,7 +403,7 @@ export class TwoNodoc implements INodeType {
 						path = `/api/public/invoices/${this.getNodeParameter('invoiceId', i)}/facturx`;
 						isBinaryDownload = true;
 					} else {
-						throw new NodeOperationError(this.getNode(), `Opération inconnue : ${operation}`);
+						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
 					}
 				} else if (resource === 'client') {
 					if (operation === 'create') {
@@ -429,7 +429,7 @@ export class TwoNodoc implements INodeType {
 						method = 'DELETE';
 						path = `/api/public/clients/${this.getNodeParameter('clientId', i)}`;
 					} else {
-						throw new NodeOperationError(this.getNode(), `Opération inconnue : ${operation}`);
+						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
 					}
 				} else if (resource === 'einvoice') {
 					if (operation === 'status') {
@@ -468,10 +468,10 @@ export class TwoNodoc implements INodeType {
 							i,
 						)}/initiate-payment`;
 					} else {
-						throw new NodeOperationError(this.getNode(), `Opération inconnue : ${operation}`);
+						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
 					}
 				} else {
-					throw new NodeOperationError(this.getNode(), `Ressource inconnue : ${resource}`);
+					throw new NodeOperationError(this.getNode(), `Unknown resource: ${resource}`);
 				}
 
 				if (isBinaryDownload) {
