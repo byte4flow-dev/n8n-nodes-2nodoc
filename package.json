@@ -1,6 +1,6 @@
 {
   "name": "n8n-nodes-2nodoc",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "n8n community node for 2nodoc — French/Belgian e-invoicing (RFE): manage invoices, clients, and e-invoices via the 2nodoc public API.",
   "keywords": [
     "n8n-community-node-package",
