@@ -28,7 +28,7 @@ export class TwoNodocApi implements ICredentialType {
 			default: '',
 			required: true,
 			description:
-				'API token generated from the 2nodoc dashboard (Settings > API). Sent as a Bearer token.',
+				'API token generated from the 2nodoc dashboard (Settings > API). Requires a 2nodoc Team account with completed KYC verification — sign up at 2nodoc.com/register. Sent as a Bearer token.',
 		},
 		{
 			displayName: 'Base URL',

@@ -4,6 +4,14 @@ n8n community node for [2nodoc](https://2nodoc.com), a SaaS e-invoicing platform
 
 > Status: v0.1 — MVP. Covered scope: Invoices, Clients, E-Invoices (RFE). Coming soon: Products, Team Users, purchase invoice from OCR.
 
+## Prerequisites
+
+You need a 2nodoc account before you can use this node:
+
+1. Create a **Team account** at [2nodoc.com/register](https://2nodoc.com/register).
+2. Complete the **KYC verification** for your company (required by French/Belgian e-invoicing regulation before your account can send or receive real invoices).
+3. Once your account is verified, generate an API token from your 2nodoc dashboard (**Settings → API**) — this is the value you'll use in the credential below.
+
 ## Installation
 
 In a self-hosted n8n instance:
@@ -25,7 +33,7 @@ npm link n8n-nodes-2nodoc
 
 Create a **2nodoc API** credential with:
 
-- **API Token**: token generated from the 2nodoc dashboard (Settings → API), sent as `Authorization: Bearer <token>`.
+- **API Token**: token generated from the 2nodoc dashboard (Settings → API), sent as `Authorization: Bearer <token>`. Requires a verified 2nodoc Team account — see [Prerequisites](#prerequisites) above.
 - **Base URL**: `https://api.2nodoc.com` by default.
 
 ## Resources and covered operations
