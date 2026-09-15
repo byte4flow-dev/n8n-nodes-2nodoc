@@ -1,0 +1,59 @@
+{
+  "name": "n8n-nodes-2nodoc",
+  "version": "0.1.0",
+  "description": "n8n community node for 2nodoc — e-invoicing (RFE France/Belgique), factures, clients et e-invoices via l'API publique 2nodoc.",
+  "keywords": [
+    "n8n-community-node-package",
+    "2nodoc",
+    "e-invoicing",
+    "facturation-electronique",
+    "rfe"
+  ],
+  "license": "MIT",
+  "homepage": "https://2nodoc.com",
+  "author": {
+    "name": "Byte4flow Limited",
+    "email": "assane.dembele@byte4flow.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/byte4flow-dev/n8n-nodes-2nodoc.git"
+  },
+  "engines": {
+    "node": ">=20.15"
+  },
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc && gulp build:icons",
+    "dev": "tsc --watch",
+    "format": "prettier nodes credentials --write",
+    "lint": "eslint \"nodes/**/*.ts\" \"credentials/**/*.ts\"",
+    "lintfix": "eslint \"nodes/**/*.ts\" \"credentials/**/*.ts\" --fix",
+    "prepublishOnly": "npm run build && npm run lint"
+  },
+  "files": [
+    "dist"
+  ],
+  "n8n": {
+    "n8nNodesApiVersion": 1,
+    "credentials": [
+      "dist/credentials/TwoNodocApi.credentials.js"
+    ],
+    "nodes": [
+      "dist/nodes/TwoNodoc/TwoNodoc.node.js"
+    ]
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-n8n-nodes-base": "^1.16.0",
+    "gulp": "^4.0.2",
+    "n8n-workflow": "^1.63.0",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.0"
+  },
+  "peerDependencies": {
+    "n8n-workflow": "*"
+  }
+}
