@@ -29,7 +29,8 @@
     "format": "prettier nodes credentials --write",
     "lint": "eslint \"nodes/**/*.ts\" \"credentials/**/*.ts\"",
     "lintfix": "eslint \"nodes/**/*.ts\" \"credentials/**/*.ts\" --fix",
-    "prepublishOnly": "npm run build && npm run lint"
+    "prepublishOnly": "npm run build && npm run lint",
+    "test": "tsc --noEmit"
   },
   "files": [
     "dist"
