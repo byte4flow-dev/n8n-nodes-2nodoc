@@ -26,6 +26,28 @@ export class TwoNodoc implements INodeType {
 		subtitle: '={{$parameter["resource"] + ": " + $parameter["operation"]}}',
 		description: 'Manage invoices, clients, and RFE e-invoicing via the 2nodoc API',
 		usableAsTool: true,
+		// Makes the node discoverable in the n8n node panel search (e.g. searching "invoice",
+		// "billing", "facture") even though its display name is just "2nodoc". Keep this array in
+		// sync with TwoNodoc.node.json — n8n's community node registry search only indexes the
+		// alias declared inline here, while node.json drives categorization for local installs.
+		codex: {
+			categories: ['Finance & Accounting'],
+			alias: [
+				'invoice',
+				'invoices',
+				'invoicing',
+				'billing',
+				'e-invoicing',
+				'electronic invoice',
+				'facture',
+				'facturation',
+				'facturation electronique',
+				'RFE',
+				'PDP',
+				'Factur-X',
+				'client',
+			],
+		},
 		defaults: {
 			name: '2nodoc',
 		},

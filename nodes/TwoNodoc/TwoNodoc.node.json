@@ -1,0 +1,33 @@
+{
+	"node": "n8n-nodes-2nodoc.twoNodoc",
+	"nodeVersion": "1.0",
+	"codexVersion": "1.0",
+	"categories": ["Finance & Accounting"],
+	"alias": [
+		"invoice",
+		"invoices",
+		"invoicing",
+		"billing",
+		"e-invoicing",
+		"electronic invoice",
+		"facture",
+		"facturation",
+		"facturation electronique",
+		"RFE",
+		"PDP",
+		"Factur-X",
+		"client"
+	],
+	"resources": {
+		"primaryDocumentation": [
+			{
+				"url": "https://github.com/byte4flow-dev/n8n-nodes-2nodoc/blob/main/README.md"
+			}
+		],
+		"credentialDocumentation": [
+			{
+				"url": "https://api.2nodoc.com/docs"
+			}
+		]
+	}
+}
