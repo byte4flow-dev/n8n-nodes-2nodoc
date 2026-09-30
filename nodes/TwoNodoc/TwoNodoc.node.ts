@@ -12,9 +12,10 @@ import { NodeApiError, NodeConnectionTypes, NodeOperationError } from 'n8n-workf
  * n8n community node for the public 2nodoc API (French/Belgian RFE e-invoicing).
  *
  * Endpoints and schemas are based on the public OpenAPI spec https://api.2nodoc.com/openapi.json
- * (checked on 13/09/2026). v0.1 (MVP) scope: Invoices, Clients, E-Invoices (RFE/PA-PDP).
- * Not covered yet (to add in a v0.2 following the same pattern): Products, Team Users,
- * purchase invoice from OCR (POST /api/public/invoices/buy).
+ * (checked on 13/09/2026, re-checked on 30/09/2026 for the v0.2.0 e-invoice actions below).
+ * v0.2 scope: Invoices, Clients, E-Invoices (RFE/PA-PDP) with the full e-invoice action set.
+ * Not covered yet (to add in a future version following the same pattern): Products, Team
+ * Users, purchase invoice from OCR (POST /api/public/invoices/buy).
  */
 export class TwoNodoc implements INodeType {
 	description: INodeTypeDescription = {
@@ -121,6 +122,16 @@ export class TwoNodoc implements INodeType {
 				displayOptions: { show: { resource: ['einvoice'] } },
 				options: [
 					{ name: 'Accept', value: 'accept', action: 'Accept a received electronic invoice' },
+					{
+						name: 'Complete',
+						value: 'complete',
+						action: 'Mark an electronic invoice as complete',
+					},
+					{
+						name: 'Conditionally Accept',
+						value: 'conditionallyAccept',
+						action: 'Conditionally accept a received electronic invoice',
+					},
 					{ name: 'Connected Company', value: 'company', action: 'Get the connected company' },
 					{ name: 'Connection Status', value: 'status', action: 'Check the RFE connection status' },
 					{ name: 'Get', value: 'get', action: 'Get an electronic invoice' },
@@ -135,7 +146,17 @@ export class TwoNodoc implements INodeType {
 						value: 'dispute',
 						action: 'Open a dispute on an electronic invoice',
 					},
+					{
+						name: 'Payment Received',
+						value: 'paymentReceived',
+						action: 'Mark an electronic invoice as paid',
+					},
 					{ name: 'Reject', value: 'reject', action: 'Reject a received electronic invoice' },
+					{
+						name: 'Suspend',
+						value: 'suspend',
+						action: 'Suspend an electronic invoice',
+					},
 				],
 				default: 'getAll',
 			},
@@ -185,7 +206,17 @@ export class TwoNodoc implements INodeType {
 				displayOptions: {
 					show: {
 						resource: ['einvoice'],
-						operation: ['get', 'accept', 'reject', 'dispute', 'initiatePayment'],
+						operation: [
+							'get',
+							'accept',
+							'reject',
+							'dispute',
+							'conditionallyAccept',
+							'suspend',
+							'paymentReceived',
+							'complete',
+							'initiatePayment',
+						],
 					},
 				},
 			},
@@ -262,6 +293,87 @@ export class TwoNodoc implements INodeType {
 			},
 
 			// ---------------------------------------------------------------
+			// Invoice: send by email
+			// ---------------------------------------------------------------
+			{
+				displayName: 'To Email',
+				name: 'toEmail',
+				type: 'string',
+				placeholder: 'name@email.com',
+				default: '',
+				required: true,
+				description: 'Recipient email address (to_email)',
+				displayOptions: { show: { resource: ['invoice'], operation: ['send'] } },
+			},
+			{
+				displayName: 'Format',
+				name: 'sendVersion',
+				type: 'options',
+				default: 'facturx',
+				options: [
+					{ name: 'FACTUR-X', value: 'facturx' },
+					{ name: 'PDF', value: 'pdf' },
+				],
+				description: 'File version attached to the email (version)',
+				displayOptions: { show: { resource: ['invoice'], operation: ['send'] } },
+			},
+			{
+				displayName: 'Subject',
+				name: 'subject',
+				type: 'string',
+				default: '',
+				description: 'Optional email subject override',
+				displayOptions: { show: { resource: ['invoice'], operation: ['send'] } },
+			},
+			{
+				displayName: 'Message',
+				name: 'message',
+				type: 'string',
+				typeOptions: { rows: 4 },
+				default: '',
+				description: 'Optional email body override (sent to the API as body)',
+				displayOptions: { show: { resource: ['invoice'], operation: ['send'] } },
+			},
+
+			// ---------------------------------------------------------------
+			// E-invoice: reason / conditions (Reject, Dispute, Conditionally
+			// Accept, Suspend require a reason; Accept accepts an optional one)
+			// ---------------------------------------------------------------
+			{
+				displayName: 'Reason',
+				name: 'reason',
+				type: 'string',
+				typeOptions: { rows: 2 },
+				default: '',
+				required: true,
+				description: 'Reason sent to the API (required for this action)',
+				displayOptions: {
+					show: {
+						resource: ['einvoice'],
+						operation: ['reject', 'dispute', 'conditionallyAccept', 'suspend'],
+					},
+				},
+			},
+			{
+				displayName: 'Reason',
+				name: 'reason',
+				type: 'string',
+				typeOptions: { rows: 2 },
+				default: '',
+				description: 'Optional reason sent to the API',
+				displayOptions: { show: { resource: ['einvoice'], operation: ['accept'] } },
+			},
+			{
+				displayName: 'Conditions',
+				name: 'conditions',
+				type: 'string',
+				typeOptions: { rows: 2 },
+				default: '',
+				description: 'Optional conditions attached to the conditional acceptance',
+				displayOptions: { show: { resource: ['einvoice'], operation: ['conditionallyAccept'] } },
+			},
+
+			// ---------------------------------------------------------------
 			// Invoice/Client: getAll — pagination & filters
 			// ---------------------------------------------------------------
 			{
@@ -324,6 +436,20 @@ export class TwoNodoc implements INodeType {
 					show: {
 						resource: ['invoice', 'client'],
 						operation: ['create', 'update'],
+					},
+				},
+			},
+			{
+				displayName: 'Additional Fields',
+				name: 'additionalFields',
+				type: 'json',
+				default: '{}',
+				description:
+					'Extra fields to merge into the request body (JSON format), e.g. {"payment_method": "transfer", "expected_payment_date": "2026-10-15", "reference": "REF123"}',
+				displayOptions: {
+					show: {
+						resource: ['einvoice'],
+						operation: ['initiatePayment'],
 					},
 				},
 			},
@@ -407,6 +533,13 @@ export class TwoNodoc implements INodeType {
 					} else if (operation === 'send') {
 						method = 'POST';
 						path = `/api/public/invoices/${this.getNodeParameter('invoiceId', i)}/send`;
+						const toEmail = this.getNodeParameter('toEmail', i) as string;
+						const sendVersion = this.getNodeParameter('sendVersion', i) as string;
+						const subject = this.getNodeParameter('subject', i) as string;
+						const message = this.getNodeParameter('message', i) as string;
+						body = { to_email: toEmail, version: sendVersion };
+						if (subject) body.subject = subject;
+						if (message) body.body = message;
 					} else if (operation === 'getSendHistory') {
 						method = 'GET';
 						path = `/api/public/invoices/${this.getNodeParameter('invoiceId', i)}/send-history`;
@@ -471,18 +604,45 @@ export class TwoNodoc implements INodeType {
 					} else if (operation === 'accept') {
 						method = 'POST';
 						path = `/api/public/einvoices/invoices/${this.getNodeParameter('einvoiceId', i)}/accept`;
+						const reason = this.getNodeParameter('reason', i) as string;
+						if (reason) body.reason = reason;
 					} else if (operation === 'reject') {
 						method = 'POST';
 						path = `/api/public/einvoices/invoices/${this.getNodeParameter('einvoiceId', i)}/reject`;
+						body = { reason: this.getNodeParameter('reason', i) as string };
 					} else if (operation === 'dispute') {
 						method = 'POST';
 						path = `/api/public/einvoices/invoices/${this.getNodeParameter('einvoiceId', i)}/dispute`;
+						body = { reason: this.getNodeParameter('reason', i) as string };
+					} else if (operation === 'conditionallyAccept') {
+						method = 'POST';
+						path = `/api/public/einvoices/invoices/${this.getNodeParameter(
+							'einvoiceId',
+							i,
+						)}/conditionally-accept`;
+						const conditions = this.getNodeParameter('conditions', i) as string;
+						body = { reason: this.getNodeParameter('reason', i) as string };
+						if (conditions) body.conditions = conditions;
+					} else if (operation === 'suspend') {
+						method = 'POST';
+						path = `/api/public/einvoices/invoices/${this.getNodeParameter('einvoiceId', i)}/suspend`;
+						body = { reason: this.getNodeParameter('reason', i) as string };
+					} else if (operation === 'paymentReceived') {
+						method = 'POST';
+						path = `/api/public/einvoices/invoices/${this.getNodeParameter(
+							'einvoiceId',
+							i,
+						)}/payment-received`;
+					} else if (operation === 'complete') {
+						method = 'POST';
+						path = `/api/public/einvoices/invoices/${this.getNodeParameter('einvoiceId', i)}/complete`;
 					} else if (operation === 'initiatePayment') {
 						method = 'POST';
 						path = `/api/public/einvoices/invoices/${this.getNodeParameter(
 							'einvoiceId',
 							i,
 						)}/initiate-payment`;
+						body = parseJsonParam(this.getNodeParameter('additionalFields', i));
 					} else {
 						throw new NodeOperationError(this.getNode(), `Unknown operation: ${operation}`);
 					}
@@ -532,12 +692,28 @@ export class TwoNodoc implements INodeType {
 						},
 					);
 
+					// List endpoints don't share a single wrapper key: Invoice and E-Invoice
+					// lists nest their array under "invoices" (InvoiceListResponse), Client
+					// (and the future Team Users) list nests it under "items"
+					// (ClientListResponse/TeamUserListResponse). Try every known key before
+					// falling back to returning the raw object as a single item.
+					let unwrapped: IDataObject[] | undefined;
+					if (response && typeof response === 'object' && !Array.isArray(response)) {
+						for (const key of ['invoices', 'items', 'einvoices', 'clients', 'data']) {
+							const value = (response as IDataObject)[key];
+							if (Array.isArray(value)) {
+								unwrapped = value as IDataObject[];
+								break;
+							}
+						}
+					}
+
 					if (Array.isArray(response)) {
 						for (const entry of response as IDataObject[]) {
 							returnData.push({ json: entry, pairedItem: { item: i } });
 						}
-					} else if (response && typeof response === 'object' && Array.isArray((response as IDataObject).items)) {
-						for (const entry of (response as IDataObject).items as IDataObject[]) {
+					} else if (unwrapped) {
+						for (const entry of unwrapped) {
 							returnData.push({ json: entry, pairedItem: { item: i } });
 						}
 					} else {

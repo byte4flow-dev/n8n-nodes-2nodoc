@@ -2,7 +2,7 @@
 
 n8n community node for [2nodoc](https://2nodoc.com), a SaaS e-invoicing platform (Solution Compatible RFE, France/Belgium). Create, list, and update invoices and clients, manage the e-invoicing (RFE/PA-PDP) lifecycle, and download PDF/Factur-X files, directly from your n8n workflows.
 
-> Status: v0.1 — MVP. Covered scope: Invoices, Clients, E-Invoices (RFE). Coming soon: Products, Team Users, purchase invoice from OCR.
+> Status: v0.2. Covered scope: Invoices, Clients, E-Invoices (RFE) with the full e-invoice action set. Coming soon: Products, Team Users, purchase invoice from OCR.
 
 ## Prerequisites
 
@@ -45,7 +45,9 @@ Create, Get, Get Many, Update, Delete, Update Status, Convert Quote to Invoice, 
 Create, Get, Get Many, Update, Delete.
 
 ### E-Invoice / RFE (`/api/public/einvoices`)
-Connection Status, Connected Company, Get, Get Many (received/sent), Accept, Reject, Open Dispute, Initiate Payment.
+Connection Status, Connected Company, Get, Get Many (received/sent), Accept, Conditionally Accept, Reject, Open Dispute, Suspend, Payment Received, Complete, Initiate Payment.
+
+Accept takes an optional Reason; Reject, Open Dispute, Conditionally Accept, and Suspend require one (the API rejects the call otherwise).
 
 Every create/update operation exposes an **Additional Fields** field (JSON) to pass fields not yet explicitly modeled in the node, without having to wait for a new version.
 
@@ -54,6 +56,8 @@ Every create/update operation exposes an **Additional Fields** field (JSON) to p
 - **Invoice ID vs. invoice number**: operations that require an ID (e.g. Invoice → Get) expect the internal numeric ID (e.g. `519717`), not the display number (e.g. `F202600112`). Use Invoice → Get Many or E-Invoice → Get Many to look up the internal ID first.
 - **Email validation**: the 2nodoc API rejects reserved/special-use email domains (e.g. `.local`). Use a real domain for client emails.
 - **Multi-item execution**: like any n8n node, this node's `execute()` runs once per input item unless "Execute Once" is enabled on the node. Be careful when chaining a write operation (Create/Update/Delete) after a node that outputs multiple items — it will run once per item, which can unintentionally create duplicates.
+- **Get Many now unwraps the list correctly (v0.2.0)**: Invoice → Get Many and E-Invoice → Get Many previously output a single item containing the whole `{invoices: [...], total, ...}` wrapper instead of one item per invoice. Fixed in v0.2.0 — Get Many now outputs one item per record for every resource, same as Client → Get Many already did.
+- **Send by Email now sends the recipient (v0.2.0)**: earlier versions called the send endpoint without a recipient email, so it likely failed against the real API. v0.2.0 adds a required **To Email** field, plus optional Format (FACTUR-X/PDF), Subject, and Message.
 
 ## Example workflow
 
